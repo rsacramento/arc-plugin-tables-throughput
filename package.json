@@ -1,8 +1,8 @@
 {
-	"name": "arc-plugin-tables-provisioned",
+	"name": "arc-plugin-tables-throughput",
 	"version": "0.1.0",
 	"description": "Architect plugin to setup provisioned billing mode and reading/writing throughput for DynamoDB tables.",
-	"homepage": "https://github.com/rsacramento/arc-plugin-tables-provisioned",
+	"homepage": "https://github.com/rsacramento/arc-plugin-tables-throughput",
 	"author": "Rafael Sacramento",
 	"license": "Apache-2.0",
 	"keywords": [
@@ -18,7 +18,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/rsacramento/arc-plugin-tables-provisioned"
+		"url": "https://github.com/rsacramento/arc-plugin-tables-throughput"
 	},
 	"engines": {
 		"node": ">=16"

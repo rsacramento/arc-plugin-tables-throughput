@@ -1,127 +1,42 @@
-// let { join } = require('path')
+const { capitalize } = require("@architect/inventory/src/lib")
+
+const unique = objArray => [...new Set(objArray.map(i => Object.keys(i)[0]))]
 
 module.exports = {
-  // Setters
-  set: {
-    /**
-     * Pragmas
-     */
-    // @events
-    // events: ({ arc, inventory }) => {
-    //   return {
-    //     name: 'my-event',
-    //     src: join('path', 'to', 'code'),
-    //   }
-    // },
+	deploy: {
+		start: async ({ arc, cloudformation }) => {
+			let cfn = cloudformation
 
-    // @queues
-    // queues: ({ arc, inventory }) => {
-    //   return {
-    //     name: 'my-queue',
-    //     src: join('path', 'to', 'code'),
-    //   }
-    // },
+			const provisionedTables = arc["tables-throughput"]
+			if (!Array.isArray(provisionedTables) || !provisionedTables.length) return cloudformation
 
-    // @http
-    // http: ({ arc, inventory }) => {
-    //   return {
-    //     method: 'get',
-    //     path: '/*'
-    //     src: join('path', 'to', 'code'),
-    //   }
-    // },
+			if (!Array.isArray(arc.tables) || !unique(provisionedTables).every(i => unique(arc.tables).includes(i))) {
+				throw ReferenceError(`Specifying @tables-throughput requires specifying corresponding @tables`)
+			}
 
-    // @scheduled
-    // scheduled: ({ arc, inventory }) => {
-    //   return {
-    //     name: 'my-scheduled-event',
-    //     src: join('path', 'to', 'code'),
-    //     rate: '1 day', // or...
-    //     cron: '* * * * * *',
-    //   }
-    // },
+			// Loop thru manifest tables
+			arc.tables.forEach(table => {
+				const name = Object.keys(table).pop()
+				const tableName = name
+					?.split(/[-._]/)
+					.map(p => capitalize(p))
+					.join("")
+					.concat("Table")
 
-    // @tables-streams
-    // 'tables-streams': ({ arc, inventory }) => {
-    //   return {
-    //     name: 'my-table-stream',
-    //     table: 'app-data',
-    //     src: join('path', 'to', 'code'),
-    //   }
-    // },
+				// Reduce attributes from manifest into CloudFormation DynamoDB properties
+				cfn.Resources[tableName].Properties = provisionedTables
+					.filter(throughputAttr => Object.keys(throughputAttr).pop() === name)
+					.reduce((props, throughputAttr) => {
+						props.BillingMode = "PROVISIONED"
+						props.ProvisionedThroughput = {
+							ReadCapacityUnits: throughputAttr[name].reading,
+							WriteCapacityUnits: throughputAttr[name].writing,
+						}
+						return props
+					}, cfn.Resources[tableName].Properties)
+			})
 
-    // Custom / bare Lambdas (with event sources to be defined by `deploy.start`)
-    // customLambdas: ({ arc, inventory }) => {
-    //   return {
-    //     name: 'my-custom-lambda',
-    //     src: join('path', 'to', 'code'),
-    //   }
-    // },
-
-    /**
-     * Resources
-     */
-    // Environment variables
-    // env: ({ arc, inventory }) => {
-    //   return {
-    //     MY_ENV_VAR: 'ok',
-    //     ANOTHER_VAR: { objects_and_arrays_are_automatically_json_encoded: 'neat!' }
-    //   }
-    // },
-
-    // Custom runtimes
-    // runtimes: ({ arc, inventory }) => {
-    //   return {
-    //     name: 'runtime-name',
-    //     type: 'transpiled',
-    //     build: '.build',
-    //     baseRuntime: 'nodejs14.x',
-    //   }
-    // },
-  },
-
-  // Deploy
-  deploy: {
-    // Pre-deploy operations
-    // start: async ({ arc, cloudformation, dryRun, inventory, stage }) => {
-    //   // Run operations prior to deployment
-    //   // Optionally return mutated `cloudformation`
-    // },
-
-    // Architect service discovery and config data
-    // services: async ({ arc, cloudformation, dryRun, inventory, stage }) => {
-    //   return {
-    //     'service-name': 'value or ARN', // Register a service, or...
-    //     'arbitrary-data': '...' // Add up to 4KB of arbitrary data / config as a string
-    //   }
-    // },
-
-    // Alternate deployment targets
-    // target: async ({ arc, cloudformation, dryRun, inventory, stage }) => {
-    //   // Deploy to a target other than AWS (e.g. Begin, Serverless Cloud, etc.)
-    // },
-
-    // Post-deploy operations
-    // end: async ({ arc, cloudformation, dryRun, inventory, stage }) => {
-    //   // Run operations after to deployment
-    // },
-  },
-
-  // Sandbox
-  sandbox: {
-    // Startup operations
-    // start: async ({ arc, inventory, invoke }) => {
-    //   // Run operations upon Sandbox startup
-    // },
-
-    // Project filesystem watcher
-    // watcher: async ({ filename, event, inventory, invoke }) => {
-    //   // Act on filesystem events within your project
-    // },
-
-    // Shutdown operations
-    // end: async ({ arc, inventory, invoke }) => {
-    //   // Run operations upon Sandbox shutdown
-    // },
-  }
+			return cfn
+		},
+	},
 }
