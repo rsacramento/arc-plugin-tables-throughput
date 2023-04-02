@@ -15,8 +15,8 @@ Enables Provisioned billing mode and defines reading and writing throughput for 
 
 - `@tables-throughput` is a feature subset of [`@tables`][tables]; as such, the names of your declared tables must match those of your [`@tables`][tables]
 - The basic syntax for defining `@tables-throughput` specifies the base table name followed by `reading` and `writing` throughput
-- `reading` throughtput is expressed as an integer, in Reading Capacity Unities (RCUs)
-- `writing` throughtput is expressed as an integer, in Wrigint Capacity Unities (WCUs)
+- `reading` throughtput is expressed as an integer, in Reading Capacity Unities ([RCUs][pricing])
+- `writing` throughtput is expressed as an integer, in Wrigint Capacity Unities ([WCUs][pricing])
 - When defined, they set the table's billing mode to provisioned (BillingMode: PROVISIONED) and specify its throughput
 - By default, all [`@tables`][tables] are billed per request (BillingMode: PAY_PER_REQUEST), so not defining this plugin for a table leaves the billing mode as pay-per-request
 
