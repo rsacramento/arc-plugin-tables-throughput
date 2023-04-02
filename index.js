@@ -27,10 +27,14 @@ module.exports = {
 				cfn.Resources[tableName].Properties = provisionedTables
 					.filter(throughputAttr => Object.keys(throughputAttr).pop() === name)
 					.reduce((props, throughputAttr) => {
-						props.BillingMode = "PROVISIONED"
-						props.ProvisionedThroughput = {
-							ReadCapacityUnits: throughputAttr[name].reading,
-							WriteCapacityUnits: throughputAttr[name].writing,
+						if (throughputAttr[name].reading && throughputAttr[name].writing) {
+							props.BillingMode = "PROVISIONED"
+							props.ProvisionedThroughput = {
+								ReadCapacityUnits: throughputAttr[name].reading,
+								WriteCapacityUnits: throughputAttr[name].writing,
+							}
+						} else {
+							throw ReferenceError(`Missing reading/writing attributes for @tables-throughput table ${name}`)
 						}
 						return props
 					}, cfn.Resources[tableName].Properties)
